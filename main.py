@@ -23,9 +23,9 @@ target_color = (0, 200, 0)
 # Score
 score = 0
 score_color = (10, 10)
-# Others
-rectangle = pygame.Rect(700, 500, 80, 40)
-rectangle_color = (125, 137, 215)
+# Obstacle
+obstacle = pygame.Rect(340, 240, 60, 60)
+obstacle_color = (125, 137, 215)
 
 # Start of the game
 running = True
@@ -42,6 +42,11 @@ while running:
         target.y = random.randint(0, HEIGHT - target_height)
         score += 1
 
+    # Player and obstacle collision
+    if player.colliderect(obstacle):
+        score = 0
+        player.x, player.y = 50, 50
+         
     # Player Moving
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
@@ -61,7 +66,7 @@ while running:
     # Background
     screen.fill((25,25,25))
     # Obstacle
-    pygame.draw.rect(screen, rectangle_color, rectangle)
+    pygame.draw.rect(screen, obstacle_color, obstacle)
     # Target
     pygame.draw.rect(screen, target_color, target)
     # Player
