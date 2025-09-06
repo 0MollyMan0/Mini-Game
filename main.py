@@ -14,12 +14,18 @@ player_x, player_y = 50, 50
 player_width, player_height = 50, 50
 player = pygame.Rect(player_x, player_y, player_width, player_width)
 player_speed = 5
+player_color = (255, 0, 0)
 # Target
 target_x, target_y = 300, 200
 target_width, target_height = 20, 20
 target = pygame.Rect(target_x, target_y, target_width, target_height)
+target_color = (0, 200, 0)
+# Score
+score = 0
+score_color = (10, 10)
 # Others
-blue_rectangle = pygame.Rect(700, 500, 80, 40)
+rectangle = pygame.Rect(700, 500, 80, 40)
+rectangle_color = (125, 137, 215)
 
 # Start of the game
 running = True
@@ -34,6 +40,7 @@ while running:
     if player.colliderect(target):
         target.x = random.randint(0, WIDTH - target_width)
         target.y = random.randint(0, HEIGHT - target_height)
+        score += 1
 
     # Player Moving
     keys = pygame.key.get_pressed()
@@ -51,11 +58,19 @@ while running:
     player.y = max(0, min(HEIGHT - player_height, player.y))
 
 # Display the elements
+    # Background
     screen.fill((25,25,25))
-    pygame.draw.rect(screen, (0, 0, 255), blue_rectangle)
-    pygame.draw.circle(screen, (0, 255, 0), (400, 300), 30)
-    pygame.draw.rect(screen, (255, 0, 0), target)
-    pygame.draw.rect(screen, (255, 0, 0), player)
+    # Obstacle
+    pygame.draw.rect(screen, rectangle_color, rectangle)
+    # Target
+    pygame.draw.rect(screen, target_color, target)
+    # Player
+    pygame.draw.rect(screen, player_color, player)
+    # Score
+    font = pygame.font.SysFont(None, 36)
+    score_text = font.render(f"Score: {score}", True, (255,255,255))
+    screen.blit(score_text, score_color)
+
     pygame.display.flip()
     clock.tick(60)
 
