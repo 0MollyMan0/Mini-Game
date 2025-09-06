@@ -1,4 +1,5 @@
 import pygame
+import random
 pygame.init()
 
 # Basic necessary things
@@ -8,10 +9,16 @@ pygame.display.set_caption("Mini-Game")
 clock = pygame.time.Clock()
 
 # Definition of game elements
+# Player
 player_x, player_y = 50, 50
 player_width, player_height = 50, 50
 player = pygame.Rect(player_x, player_y, player_width, player_width)
 player_speed = 5
+# Target
+target_x, target_y = 300, 200
+target_width, target_height = 20, 20
+target = pygame.Rect(target_x, target_y, target_width, target_height)
+# Others
 blue_rectangle = pygame.Rect(700, 500, 80, 40)
 
 # Start of the game
@@ -22,6 +29,13 @@ while running:
             running = False
     
 # Game logic
+
+    # Player and target collision
+    if player.colliderect(target):
+        target.x = random.randint(0, WIDTH - target_width)
+        target.y = random.randint(0, HEIGHT - target_height)
+
+    # Player Moving
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
         player.x -= player_speed
@@ -38,9 +52,10 @@ while running:
 
 # Display the elements
     screen.fill((25,25,25))
-    pygame.draw.rect(screen, (255, 0, 0), player)
     pygame.draw.rect(screen, (0, 0, 255), blue_rectangle)
     pygame.draw.circle(screen, (0, 255, 0), (400, 300), 30)
+    pygame.draw.rect(screen, (255, 0, 0), target)
+    pygame.draw.rect(screen, (255, 0, 0), player)
     pygame.display.flip()
     clock.tick(60)
 
