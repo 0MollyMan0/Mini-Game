@@ -22,10 +22,18 @@ target = pygame.Rect(target_x, target_y, target_width, target_height)
 target_color = (0, 200, 0)
 # Score
 score = 0
-score_color = (10, 10)
+score_position = (10, 10)
 # Obstacle
 obstacle = pygame.Rect(340, 240, 60, 60)
 obstacle_color = (125, 137, 215)
+# Chrono
+start_ticks = pygame.time.get_ticks()
+time_limit = 20  # in seconds
+timer_position = (WIDTH-175, 10)
+# Constant
+white = (255, 255, 255)
+end_game_font = pygame.font.Font("./font/PressStart2P-Regular.ttf", 48)
+font = pygame.font.Font("./font/PressStart2P-Regular.ttf", 24)
 
 # Start of the game
 running = True
@@ -35,6 +43,19 @@ while running:
             running = False
     
 # Game logic
+
+    # Chrono
+    elapsed_time = (pygame.time.get_ticks() - start_ticks) // 1000
+    if elapsed_time >= time_limit:
+        if score >= 10:
+            end_game_text = end_game_font.render("WIN", True, (0,255,0))
+            screen.blit(end_game_text, (WIDTH/2 - 100, HEIGHT/2 - 100))
+        else:
+            end_game_text = end_game_font.render("GAME OVER", True, (255,0,0))
+            screen.blit(end_game_text, (WIDTH/2 - 220, HEIGHT/2 - 100))
+        pygame.display.flip()
+        pygame.time.delay(5000)  # attendre 5 secondes
+        running = False
 
     # Player and target collision
     if player.colliderect(target):
@@ -72,9 +93,12 @@ while running:
     # Player
     pygame.draw.rect(screen, player_color, player)
     # Score
-    font = pygame.font.SysFont(None, 36)
-    score_text = font.render(f"Score: {score}", True, (255,255,255))
-    screen.blit(score_text, score_color)
+    score_text = font.render(f"Score:{score}", True, white)
+    screen.blit(score_text, score_position)
+    # Chrono
+    timer_text = font.render(f"Time:{time_limit - elapsed_time}", True, white)
+    screen.blit(timer_text, timer_position)
+
 
     pygame.display.flip()
     clock.tick(60)
