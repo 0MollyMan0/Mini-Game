@@ -11,9 +11,8 @@ clock = pygame.time.Clock()
 
 # Definition of game elements
 # Player
-player_x, player_y = 50, 50
 player_width, player_height = 50, 50
-player = pygame.Rect(player_x, player_y, player_width, player_width)
+player = pygame.Rect(50, 50, player_width, player_width)
 player_speed = 5
 player_color = (255, 0, 0)
 # Target
@@ -66,15 +65,23 @@ while running:
     # Chrono
     elapsed_time = (pygame.time.get_ticks() - start_ticks) // 1000
     if elapsed_time >= time_limit:
-        sound_played = False
         end = True
 
     # Player and target collision
     if player.colliderect(target):
         collect_sound.play()
-        target.x = random.randint(0, WIDTH - target_width)
-        target.y = random.randint(0, HEIGHT - target_height)
         score += 1
+        valid_position = False
+        while not valid_position:
+            target.x = random.randint(0, WIDTH - target_width)
+            target.y = random.randint(0, HEIGHT - target_height)
+            valid_position = True
+            for obstacle in obstacles: 
+                if target.colliderect(obstacle):
+                    valid_position = False
+                    break
+            
+        
 
     # Player and obstacle collision
     for obstacle in obstacles:
@@ -116,19 +123,16 @@ while running:
     screen.blit(timer_text, timer_position)
     # End Screen
     if end:
-        # To play the final sound 1 time per party
-        if not sound_played:
-            # if Win
-            if score >= win_score:
-                win_sound.play()
-                end_game_text = end_game_font.render("WIN", True, (0,255,0))
-                screen.blit(end_game_text, (WIDTH/2 - 90, HEIGHT/2 - 100))
-            # if Lose
-            else:
-                lose_sound.play()
-                end_game_text = end_game_font.render("GAME OVER", True, (255,0,0))
-                screen.blit(end_game_text, (WIDTH/2 - 220, HEIGHT/2 - 100))
-            sound_played = True
+        # if Win
+        if score >= win_score:
+            win_sound.play()
+            end_game_text = end_game_font.render("WIN", True, (0,255,0))
+            screen.blit(end_game_text, (WIDTH/2 - 90, HEIGHT/2 - 100))
+        # if Lose
+        else:
+            lose_sound.play()
+            end_game_text = end_game_font.render("GAME OVER", True, (255,0,0))
+            screen.blit(end_game_text, (WIDTH/2 - 220, HEIGHT/2 - 100))
         # Final Score
         final_score_text = font.render(f"Final Score: {score}", True, white)
         screen.blit(final_score_text, (WIDTH//2 - 170, HEIGHT//2 - 20))
