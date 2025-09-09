@@ -25,8 +25,18 @@ target_color = (0, 200, 0)
 score = 0
 score_position = (10, 10)
 win_score = 1
-# Obstacle
-obstacle = pygame.Rect(340, 240, 60, 60)
+# Obstacles
+obstacles = [
+    pygame.Rect(300, 150, 40, 40),
+    pygame.Rect(300, 400, 40, 40),
+    pygame.Rect(300, 650, 40, 40),
+    pygame.Rect(600, 150, 40, 40),
+    pygame.Rect(600, 400, 40, 40),
+    pygame.Rect(600, 650, 40, 40),
+    pygame.Rect(900, 150, 40, 40),
+    pygame.Rect(900, 400, 40, 40),
+    pygame.Rect(900, 650, 40, 40),
+]
 obstacle_color = (125, 137, 215)
 # Chrono
 start_ticks = pygame.time.get_ticks()
@@ -67,10 +77,11 @@ while running:
         score += 1
 
     # Player and obstacle collision
-    if player.colliderect(obstacle):
-        hit_sound.play()
-        score = 0
-        player.x, player.y = 50, 50
+    for obstacle in obstacles:
+        if player.colliderect(obstacle):
+            hit_sound.play()
+            score = 0
+            player.x, player.y = 50, 50
          
     # Player Moving
     keys = pygame.key.get_pressed()
@@ -90,8 +101,9 @@ while running:
 # Display the elements
     # Background
     screen.fill((25,25,25))
-    # Obstacle
-    pygame.draw.rect(screen, obstacle_color, obstacle)
+    # Obstacles
+    for obstacle in obstacles:
+        pygame.draw.rect(screen, obstacle_color, obstacle)
     # Target
     pygame.draw.rect(screen, target_color, target)
     # Player
