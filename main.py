@@ -1,6 +1,7 @@
 import pygame
 import random
 pygame.init()
+pygame.mixer.init()
 
 # Basic necessary things
 WIDTH, HEIGHT = 800, 600
@@ -23,14 +24,22 @@ target_color = (0, 200, 0)
 # Score
 score = 0
 score_position = (10, 10)
+win_score = 1
 # Obstacle
 obstacle = pygame.Rect(340, 240, 60, 60)
 obstacle_color = (125, 137, 215)
 # Chrono
 start_ticks = pygame.time.get_ticks()
-time_limit = 20  # in seconds
+time_limit = 5  # in seconds
 timer_position = (WIDTH-175, 10)
+# Sounds
+collect_sound = pygame.mixer.Sound("sounds/collect-coin-8bit.mp3")
+hit_sound = pygame.mixer.Sound("sounds/hurt-8bit.mp3")
+win_sound = pygame.mixer.Sound("./sounds/win-8bit.mp3")
+lose_sound = pygame.mixer.Sound("./sounds/lose-8bit.mp3")
 # Constant
+end = False
+waiting = False
 white = (255, 255, 255)
 end_game_font = pygame.font.Font("./font/PressStart2P-Regular.ttf", 48)
 font = pygame.font.Font("./font/PressStart2P-Regular.ttf", 24)
@@ -41,30 +50,26 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    
+
+
+
 # Game logic
 
     # Chrono
     elapsed_time = (pygame.time.get_ticks() - start_ticks) // 1000
     if elapsed_time >= time_limit:
-        if score >= 10:
-            end_game_text = end_game_font.render("WIN", True, (0,255,0))
-            screen.blit(end_game_text, (WIDTH/2 - 100, HEIGHT/2 - 100))
-        else:
-            end_game_text = end_game_font.render("GAME OVER", True, (255,0,0))
-            screen.blit(end_game_text, (WIDTH/2 - 220, HEIGHT/2 - 100))
-        pygame.display.flip()
-        pygame.time.delay(5000)  # attendre 5 secondes
-        running = False
+        end = True
 
     # Player and target collision
     if player.colliderect(target):
+        collect_sound.play()
         target.x = random.randint(0, WIDTH - target_width)
         target.y = random.randint(0, HEIGHT - target_height)
         score += 1
 
     # Player and obstacle collision
     if player.colliderect(obstacle):
+        hit_sound.play()
         score = 0
         player.x, player.y = 50, 50
          
@@ -98,8 +103,46 @@ while running:
     # Chrono
     timer_text = font.render(f"Time:{time_limit - elapsed_time}", True, white)
     screen.blit(timer_text, timer_position)
-
-
+    # End Screen
+    if end:
+        # if Win
+        if score >= win_score:
+            win_sound.play()
+            end_game_text = end_game_font.render("WIN", True, (0,255,0))
+            screen.blit(end_game_text, (WIDTH/2 - 90, HEIGHT/2 - 100))
+        # if Lose
+        else:
+            lose_sound.play()
+            end_game_text = end_game_font.render("GAME OVER", True, (255,0,0))
+            screen.blit(end_game_text, (WIDTH/2 - 220, HEIGHT/2 - 100))
+        # Final Score
+        final_score_text = font.render(f"Final Score: {score}", True, white)
+        screen.blit(final_score_text, (WIDTH//2 - 170, HEIGHT//2 - 20))
+        # Indication to restart or quit
+        final_score_text = font.render(f"Press R to Restart / Q to Quit", True, white)
+        screen.blit(final_score_text, (WIDTH//2 - 355, HEIGHT//2 + 100))
+        # Refresh Screen
+        pygame.display.flip()
+        # To restart
+        pygame.event.clear()
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        # Restart
+                        score = 0
+                        player.x, player.y = 50, 50
+                        target.x, target.y = 300, 200
+                        end = False
+                        waiting = False
+                        start_ticks = pygame.time.get_ticks()
+                    elif event.key == pygame.K_q:
+                        waiting = False
+                        running = False
+                elif event.type == pygame.QUIT:
+                        waiting = False
+                        running = False
     pygame.display.flip()
     clock.tick(60)
 
