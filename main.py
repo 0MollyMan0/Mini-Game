@@ -4,7 +4,7 @@ pygame.init()
 pygame.mixer.init()
 
 # Basic necessary things
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Mini-Game")
 clock = pygame.time.Clock()
@@ -30,7 +30,7 @@ obstacle = pygame.Rect(340, 240, 60, 60)
 obstacle_color = (125, 137, 215)
 # Chrono
 start_ticks = pygame.time.get_ticks()
-time_limit = 5  # in seconds
+time_limit = 10  # in seconds
 timer_position = (WIDTH-175, 10)
 # Sounds
 collect_sound = pygame.mixer.Sound("sounds/collect-coin-8bit.mp3")
@@ -51,13 +51,12 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-
-
 # Game logic
 
     # Chrono
     elapsed_time = (pygame.time.get_ticks() - start_ticks) // 1000
     if elapsed_time >= time_limit:
+        sound_played = False
         end = True
 
     # Player and target collision
@@ -105,22 +104,25 @@ while running:
     screen.blit(timer_text, timer_position)
     # End Screen
     if end:
-        # if Win
-        if score >= win_score:
-            win_sound.play()
-            end_game_text = end_game_font.render("WIN", True, (0,255,0))
-            screen.blit(end_game_text, (WIDTH/2 - 90, HEIGHT/2 - 100))
-        # if Lose
-        else:
-            lose_sound.play()
-            end_game_text = end_game_font.render("GAME OVER", True, (255,0,0))
-            screen.blit(end_game_text, (WIDTH/2 - 220, HEIGHT/2 - 100))
+        # To play the final sound 1 time per party
+        if not sound_played:
+            # if Win
+            if score >= win_score:
+                win_sound.play()
+                end_game_text = end_game_font.render("WIN", True, (0,255,0))
+                screen.blit(end_game_text, (WIDTH/2 - 90, HEIGHT/2 - 100))
+            # if Lose
+            else:
+                lose_sound.play()
+                end_game_text = end_game_font.render("GAME OVER", True, (255,0,0))
+                screen.blit(end_game_text, (WIDTH/2 - 220, HEIGHT/2 - 100))
+            sound_played = True
         # Final Score
         final_score_text = font.render(f"Final Score: {score}", True, white)
         screen.blit(final_score_text, (WIDTH//2 - 170, HEIGHT//2 - 20))
         # Indication to restart or quit
-        final_score_text = font.render(f"Press R to Restart / Q to Quit", True, white)
-        screen.blit(final_score_text, (WIDTH//2 - 355, HEIGHT//2 + 100))
+        final_indication_text = font.render(f"Press R to Restart / Q to Quit", True, white)
+        screen.blit(final_indication_text, (WIDTH//2 - 355, HEIGHT//2 + 100))
         # Refresh Screen
         pygame.display.flip()
         # To restart
