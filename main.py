@@ -1,57 +1,47 @@
 import pygame
-import random
+from game.settings import *
+from game.entities import *
+from game.utils import *
+from game.assets import *
+
+pygame.mixer.pre_init()
 pygame.init()
 pygame.mixer.init()
 
-# Basic necessary things
-WIDTH, HEIGHT = 1200, 800
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Mini-Game")
-clock = pygame.time.Clock()
+screen = pygame.display.set_mode((WIDTH, HEIGHT)) # Window
+pygame.display.set_caption("Mini-Game") # Name of the window
+clock = pygame.time.Clock() # Time
+sounds = load_sounds() # Pre load all the sounds
+fonts = load_fonts() # Pre load all the fonts
 
-# Definition of game elements
-# Player
-player_width, player_height = 50, 50
-player = pygame.Rect(50, 50, player_width, player_width)
-player_speed = 5
-player_color = (255, 0, 0)
-# Target
-target_x, target_y = 300, 200
-target_width, target_height = 20, 20
-target = pygame.Rect(target_x, target_y, target_width, target_height)
-target_color = (0, 200, 0)
-# Score
-score = 0
-score_position = (10, 10)
-win_score = 1
-# Obstacles
-obstacles = [
-    pygame.Rect(300, 150, 40, 40),
-    pygame.Rect(300, 400, 40, 40),
-    pygame.Rect(300, 650, 40, 40),
-    pygame.Rect(600, 150, 40, 40),
-    pygame.Rect(600, 400, 40, 40),
-    pygame.Rect(600, 650, 40, 40),
-    pygame.Rect(900, 150, 40, 40),
-    pygame.Rect(900, 400, 40, 40),
-    pygame.Rect(900, 650, 40, 40),
-]
-obstacle_color = (125, 137, 215)
 # Chrono
 start_ticks = pygame.time.get_ticks()
-time_limit = 10  # in seconds
-timer_position = (WIDTH-175, 10)
-# Sounds
-collect_sound = pygame.mixer.Sound("sounds/collect-coin-8bit.mp3")
-hit_sound = pygame.mixer.Sound("sounds/hurt-8bit.mp3")
-win_sound = pygame.mixer.Sound("./sounds/win-8bit.mp3")
-lose_sound = pygame.mixer.Sound("./sounds/lose-8bit.mp3")
-# Constant
-end = False
-waiting = False
-white = (255, 255, 255)
-end_game_font = pygame.font.Font("./font/PressStart2P-Regular.ttf", 48)
-font = pygame.font.Font("./font/PressStart2P-Regular.ttf", 24)
+
+# Player
+player = Player(50, 50, PLAYER_SIZE, PLAYER_COLOR, PLAYER_SPEED)
+
+# Obstacles
+obstacles = [
+    Obstacle(300, 150, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, OBSTACLE_COLOR),
+    Obstacle(300, 400, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, OBSTACLE_COLOR),
+    Obstacle(300, 650, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, OBSTACLE_COLOR),
+    Obstacle(600, 150, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, OBSTACLE_COLOR),
+    Obstacle(600, 400, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, OBSTACLE_COLOR),
+    Obstacle(600, 650, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, OBSTACLE_COLOR),
+    Obstacle(900, 150, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, OBSTACLE_COLOR),
+    Obstacle(900, 400, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, OBSTACLE_COLOR),
+    Obstacle(900, 650, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, OBSTACLE_COLOR),
+]
+
+# Target
+target = Target(300, 200, TARGET_WIDTH, TARGET_HEIGHT, TARGET_COLOR, 1)
+
+# Boost
+boosts = [
+    Boost(10 , 10, BOOST_WIDTH, BOOST_HEIGHT, BOOST_COLOR),
+    Boost(20, 20, BOOST_WIDTH, BOOST_HEIGHT, BOOST_COLOR),
+    Boost(30, 30, BOOST_WIDTH, BOOST_HEIGHT, BOOST_COLOR),
+]
 
 # Start of the game
 running = True
@@ -61,83 +51,93 @@ while running:
             running = False
 
 # Game logic
-
     # Chrono
     elapsed_time = (pygame.time.get_ticks() - start_ticks) // 1000
-    if elapsed_time >= time_limit:
+    if elapsed_time >= TIME_LIMIT:
         end = True
 
     # Player and target collision
     if player.colliderect(target):
-        collect_sound.play()
+        sounds["collect"].play()
         score += 1
         valid_position = False
         while not valid_position:
-            target.x = random.randint(0, WIDTH - target_width)
-            target.y = random.randint(0, HEIGHT - target_height)
+            target.x = random.randint(0, WIDTH - TARGET_WIDTH)
+            target.y = random.randint(0, HEIGHT - TARGET_HEIGHT)
             valid_position = True
             for obstacle in obstacles: 
                 if target.colliderect(obstacle):
                     valid_position = False
                     break
-            
-        
+    
+    # Player and accelerators
+    if speed_boost_start is not None:
+        if pygame.time.get_ticks() - speed_boost_start > 2000:  # 2 secondes de boost
+            PLAYER_SPEED = 5
+            speed_boost_start = None
+
+    for boost in boosts:
+        if player.colliderect(boost):
+            speed_boost_start = pygame.time.get_ticks()
+            PLAYER_SPEED = 7
+            sounds["boost"].play()
+            valid_position = False
+            while not valid_position:
+                target.x = random.randint(0, WIDTH - TARGET_WIDTH)
+                target.y = random.randint(0, HEIGHT - TARGET_HEIGHT)
+                if not is_colli_others(target, obstacles):
+                    valid_position = True
 
     # Player and obstacle collision
-    for obstacle in obstacles:
-        if player.colliderect(obstacle):
-            hit_sound.play()
-            score = 0
-            player.x, player.y = 50, 50
+    if is_colli_others(player, obstacles):
+        sounds["hit"].play()
+        score = 0
+        player.x, player.y = 50, 50
          
     # Player Moving
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        player.x -= player_speed
-    if keys[pygame.K_RIGHT]:
-        player.x += player_speed
-    if keys[pygame.K_UP]:
-        player.y -= player_speed
-    if keys[pygame.K_DOWN]:
-        player.y += player_speed
+    player.move(keys)
 
-# Security to not go across the borders
-    player.x = max(0, min(WIDTH - player_width, player.x))
-    player.y = max(0, min(HEIGHT - player_height, player.y))
+    # Security to not go across the borders
+    player.x = max(0, min(WIDTH - PLAYER_WIDTH, player.x))
+    player.y = max(0, min(HEIGHT - PLAYER_HEIGHT, player.y))
 
 # Display the elements
     # Background
     screen.fill((25,25,25))
     # Obstacles
     for obstacle in obstacles:
-        pygame.draw.rect(screen, obstacle_color, obstacle)
+        pygame.draw.rect(screen, OBSTACLE_COLOR, obstacle)
+    # Accelerators
+    for boost in boosts:
+        pygame.draw.rect(screen, BOOST_COLOR, boost)
     # Target
-    pygame.draw.rect(screen, target_color, target)
+    pygame.draw.rect(screen, TARGET_COLOR, target)
     # Player
-    pygame.draw.rect(screen, player_color, player)
+    pygame.draw.rect(screen, PLAYER_COLOR, player)
     # Score
-    score_text = font.render(f"Score:{score}", True, white)
-    screen.blit(score_text, score_position)
+    score_text = fonts["default"].render(f"Score:{score}", True, WHITE)
+    screen.blit(score_text, SCORE_POSITION)
     # Chrono
-    timer_text = font.render(f"Time:{time_limit - elapsed_time}", True, white)
-    screen.blit(timer_text, timer_position)
+    timer_text = fonts["default"].render(f"Time:{TIME_LIMIT - elapsed_time}", True, WHITE)
+    screen.blit(timer_text, TIMER_POSITION)
     # End Screen
     if end:
         # if Win
-        if score >= win_score:
-            win_sound.play()
-            end_game_text = end_game_font.render("WIN", True, (0,255,0))
+        if score >= WIN_SCORE:
+            sounds["win"].play()
+            end_game_text = fonts["end"].render("WIN", True, (0,255,0))
             screen.blit(end_game_text, (WIDTH/2 - 90, HEIGHT/2 - 100))
         # if Lose
         else:
-            lose_sound.play()
-            end_game_text = end_game_font.render("GAME OVER", True, (255,0,0))
+            sounds["lose"].play()
+            end_game_text = fonts["end"].render("GAME OVER", True, (255,0,0))
             screen.blit(end_game_text, (WIDTH/2 - 220, HEIGHT/2 - 100))
         # Final Score
-        final_score_text = font.render(f"Final Score: {score}", True, white)
+        final_score_text = fonts["default"].render(f"Final Score: {score}", True, WHITE)
         screen.blit(final_score_text, (WIDTH//2 - 170, HEIGHT//2 - 20))
         # Indication to restart or quit
-        final_indication_text = font.render(f"Press R to Restart / Q to Quit", True, white)
+        final_indication_text = fonts["default"].render(f"Press R to Restart / Q to Quit", True, WHITE)
         screen.blit(final_indication_text, (WIDTH//2 - 355, HEIGHT//2 + 100))
         # Refresh Screen
         pygame.display.flip()
@@ -162,6 +162,7 @@ while running:
                         waiting = False
                         running = False
     pygame.display.flip()
-    clock.tick(60)
+    clock.tick(FPS)
 
+pygame.mixer.quit()
 pygame.quit()
