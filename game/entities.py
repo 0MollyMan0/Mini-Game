@@ -9,9 +9,6 @@ class Entity:
     def draw(self, screen):
         pygame.draw.rect(screen, self.color, self.rect)
 
-    def collides_with_others(self, others):
-        return is_colli_others(self.rect, others)
-
 class Player(Entity):
     def __init__(self, x, y, size, color, speed):
         super().__init__(x, y, size, size, color)
@@ -40,3 +37,4 @@ class Boost(Entity):
     def __init__(self, x, y, w, h, color):
         super().__init__(x, y, w, h, color)
         self.active = False
+        self.start = None

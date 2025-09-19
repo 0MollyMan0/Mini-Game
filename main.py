@@ -8,7 +8,7 @@ pygame.mixer.pre_init()
 pygame.init()
 pygame.mixer.init()
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT)) # Window
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT)) # Window
 pygame.display.set_caption("Mini-Game") # Name of the window
 clock = pygame.time.Clock() # Time
 sounds = load_sounds() # Pre load all the sounds
@@ -18,7 +18,7 @@ fonts = load_fonts() # Pre load all the fonts
 start_ticks = pygame.time.get_ticks()
 
 # Player
-player = Player(50, 50, PLAYER_SIZE, PLAYER_COLOR, PLAYER_SPEED)
+player = Player(PLAYER_INIT_X, PLAYER_INIT_Y, PLAYER_SIZE, PLAYER_COLOR, PLAYER_SPEED)
 
 # Obstacles
 obstacles = [
@@ -34,14 +34,21 @@ obstacles = [
 ]
 
 # Target
-target = Target(300, 200, TARGET_WIDTH, TARGET_HEIGHT, TARGET_COLOR, 1)
+target = Target(0, 0, TARGET_WIDTH, TARGET_HEIGHT, TARGET_COLOR, 1)
+target.rect = random_position(TARGET_WIDTH, TARGET_HEIGHT, obstacles)
 
 # Boost
 boosts = [
-    Boost(10 , 10, BOOST_WIDTH, BOOST_HEIGHT, BOOST_COLOR),
-    Boost(20, 20, BOOST_WIDTH, BOOST_HEIGHT, BOOST_COLOR),
-    Boost(30, 30, BOOST_WIDTH, BOOST_HEIGHT, BOOST_COLOR),
+    Boost(0, 0, BOOST_WIDTH, BOOST_HEIGHT, BOOST_COLOR),
+    Boost(0, 0, BOOST_WIDTH, BOOST_HEIGHT, BOOST_COLOR),
+    Boost(0, 0, BOOST_WIDTH, BOOST_HEIGHT, BOOST_COLOR),
 ]
+for boost in boosts:
+    boost.rect = random_position(BOOST_WIDTH, BOOST_HEIGHT, obstacles)
+
+# Score
+score = 0
+end = False
 
 # Start of the game
 running = True
@@ -57,50 +64,41 @@ while running:
         end = True
 
     # Player and target collision
-    if player.colliderect(target):
+    if player.rect.colliderect(target):
         sounds["collect"].play()
         score += 1
         valid_position = False
-        while not valid_position:
-            target.x = random.randint(0, WIDTH - TARGET_WIDTH)
-            target.y = random.randint(0, HEIGHT - TARGET_HEIGHT)
-            valid_position = True
-            for obstacle in obstacles: 
-                if target.colliderect(obstacle):
-                    valid_position = False
-                    break
+        target.rect = random_position(TARGET_WIDTH, TARGET_HEIGHT, obstacles+boosts)
     
-    # Player and accelerators
-    if speed_boost_start is not None:
-        if pygame.time.get_ticks() - speed_boost_start > 2000:  # 2 secondes de boost
-            PLAYER_SPEED = 5
-            speed_boost_start = None
-
+    # Boosts
     for boost in boosts:
-        if player.colliderect(boost):
-            speed_boost_start = pygame.time.get_ticks()
-            PLAYER_SPEED = 7
+        # Player and Boosts
+        if player.rect.colliderect(boost):
+            boost.start = pygame.time.get_ticks()
             sounds["boost"].play()
-            valid_position = False
-            while not valid_position:
-                target.x = random.randint(0, WIDTH - TARGET_WIDTH)
-                target.y = random.randint(0, HEIGHT - TARGET_HEIGHT)
-                if not is_colli_others(target, obstacles):
-                    valid_position = True
+            boost.rect.x, boost.rect.y = -100, -100
+            boost.active = True
+        # Boost re-activation
+        if boost.active and pygame.time.get_ticks() - boost.start > BOOST_TIME_EFFECT:
+            boost.active = False
+        if boost.start != None and pygame.time.get_ticks() - boost.start > BOOST_TIME_RESPAWN:
+            boost.rect = random_position(BOOST_WIDTH, BOOST_HEIGHT, obstacles+boosts)
+            boost.start = None
+    player.speed = PLAYER_SPEED_BOOST if any(b.active for b in boosts) else PLAYER_SPEED
 
     # Player and obstacle collision
-    if is_colli_others(player, obstacles):
+    if is_colli_others(player.rect, obstacles):
         sounds["hit"].play()
         score = 0
-        player.x, player.y = 50, 50
+        player.rect.x, player.rect.y = 50, 50
          
     # Player Moving
     keys = pygame.key.get_pressed()
     player.move(keys)
 
     # Security to not go across the borders
-    player.x = max(0, min(WIDTH - PLAYER_WIDTH, player.x))
-    player.y = max(0, min(HEIGHT - PLAYER_HEIGHT, player.y))
+    player.rect.x = max(0, min(SCREEN_WIDTH - PLAYER_WIDTH, player.rect.x))
+    player.rect.y = max(0, min(SCREEN_HEIGHT - PLAYER_HEIGHT, player.rect.y))
 
 # Display the elements
     # Background
@@ -127,18 +125,18 @@ while running:
         if score >= WIN_SCORE:
             sounds["win"].play()
             end_game_text = fonts["end"].render("WIN", True, (0,255,0))
-            screen.blit(end_game_text, (WIDTH/2 - 90, HEIGHT/2 - 100))
+            screen.blit(end_game_text, (SCREEN_WIDTH/2 - 90, SCREEN_HEIGHT/2 - 100))
         # if Lose
         else:
             sounds["lose"].play()
             end_game_text = fonts["end"].render("GAME OVER", True, (255,0,0))
-            screen.blit(end_game_text, (WIDTH/2 - 220, HEIGHT/2 - 100))
+            screen.blit(end_game_text, (SCREEN_WIDTH/2 - 220, SCREEN_HEIGHT/2 - 100))
         # Final Score
         final_score_text = fonts["default"].render(f"Final Score: {score}", True, WHITE)
-        screen.blit(final_score_text, (WIDTH//2 - 170, HEIGHT//2 - 20))
+        screen.blit(final_score_text, (SCREEN_WIDTH//2 - 170, SCREEN_HEIGHT//2 - 20))
         # Indication to restart or quit
         final_indication_text = fonts["default"].render(f"Press R to Restart / Q to Quit", True, WHITE)
-        screen.blit(final_indication_text, (WIDTH//2 - 355, HEIGHT//2 + 100))
+        screen.blit(final_indication_text, (SCREEN_WIDTH//2 - 355, SCREEN_HEIGHT//2 + 100))
         # Refresh Screen
         pygame.display.flip()
         # To restart
