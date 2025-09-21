@@ -11,6 +11,7 @@ def load_sounds():
 
 def load_fonts():
     return {
+        "title": pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 100),
         "big": pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 48),
         "default": pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24),
     }

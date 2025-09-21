@@ -65,11 +65,15 @@ while running:
     ########
     if not game_started:
         screen.fill((25,25,25))
+        title_text = fonts["title"].render("Mini Game", True, WHITE)
+        screen.blit(title_text, TITLE_POSITION)
+        credits_text = fonts["default"].render("by MollyMan", True, WHITE)
+        screen.blit(credits_text, CREDITS_POSITION)
+        play_button.draw(screen)
+        pygame.display.flip()
         play_button.update()
         if play_button.is_clicked(event):
             game_started = True
-        play_button.draw(screen)
-        pygame.display.flip()
     ########
     # Game #
     ########
