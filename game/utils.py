@@ -8,7 +8,7 @@ def is_colli_others(rect, others):
             return True
     return False
 
-# Search a correct random position
+# Search a correct and random position
 def random_position(width, height, others=[]):
     rect = pygame.Rect(0, 0, width, height)
     valid_position = False
@@ -24,3 +24,8 @@ def random_position(width, height, others=[]):
             valid_position = True
 
     return rect
+
+def draw_overlay(screen, color=(0, 0, 0), alpha=150):
+    overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+    overlay.fill((*color, alpha))  
+    screen.blit(overlay, (0, 0))

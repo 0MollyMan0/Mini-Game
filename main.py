@@ -146,6 +146,7 @@ while running:
         # End Screen #
         ##############
         if end:
+            draw_overlay(screen, (0, 0, 0), 160)
             # if Win
             if score >= WIN_SCORE:
                 sounds["win"].play()
